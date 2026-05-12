@@ -1,14 +1,17 @@
 -- PART I: SCHOOL ANALYSIS
 -- 1. View the schools and school details tables
+
 select * from schools;
 select * from school_details;
 
 -- 2. In each decade, how many schools were there that produced players?
+
 select round(s.yearID, -1) AS decade, count(distinct s.schoolID) as num_school
 from schools s left join school_details sd on s.schoolID = sd.schoolID
 group by decade;
 
 -- 3. What are the names of the top 5 schools that produced the most players?
+
 select sd.name_full, count(distinct playerID) as player_count
 from schools s left join school_details sd on s.schoolID = sd.schoolID
 group by s.schoolID
@@ -16,13 +19,14 @@ order by player_count desc
 limit 5;
 
 -- 4. For each decade, what were the names of the top 3 schools that produced the most players?
-with t as 	(select round(s.yearID, -1) AS decade, sd.name_full, count(distinct s.playerID) as player_count
-        			from schools s left join school_details sd on s.schoolID = sd.schoolID
-        			group by decade, s.schoolID),
 
-	    t2 as	(select decade, name_full, player_count,
-				row_number() over(partition by decade order by player_count desc) as row_num
-				from t)
+with t as 	(select round(s.yearID, -1) AS decade, sd.name_full, count(distinct s.playerID) as player_count
+        	from schools s left join school_details sd on s.schoolID = sd.schoolID
+    		group by decade, s.schoolID),
+
+  t2 as		(select decade, name_full, player_count,
+			row_number() over(partition by decade order by player_count desc) as row_num
+			from t)
 select decade, name_full, player_count
 from t2
 where row_num <= 3
@@ -36,20 +40,22 @@ select *
 from salaries;
 
 -- 2. Return the top 20% of teams in terms of average annual spending
+
 with t as	(select teamID, yearID, sum(salary) as total_spend	
 			 from salaries
 			 group by teamID,yearID),
                 
-	t2	as(select teamID, avg(total_spend) as avg_spent,
-				ntile(5) over(order by avg(total_spend) desc) as spent_pct
-				from t
-				group by teamID)
+  t2	as (select teamID, avg(total_spend) as avg_spent,
+			ntile(5) over(order by avg(total_spend) desc) as spent_pct
+			from t
+			group by teamID)
 
 select teamID, round(avg_spent/1000000, 1) avg_spent_million
 from t2
 where spent_pct = 1;
 
--- 3. For each team, show the cumulative sum of spending over the years
+-- 3. For each team, show the cumulative sum of spending over the years.
+
 with t as (	select teamID, yearID, sum(salary) as total_spent
       			from salaries
       			group by teamID, yearID)
@@ -60,18 +66,19 @@ from t
 order by teamID, yearID;
 
 -- 4. Return the first year that each team's cumulative spending surpassed 1 billion
-with t as (	select teamID, yearID, sum(salary) as total_spent
-      			from salaries
-      			group by teamID, yearID),
-            
-	t2 as (	select teamID, yearID,
-				sum(total_spent) over (partition by teamID order by yearID) AS cumulative_sum
-			  from t),
 
-	t3 as	(select teamID, yearID, cumulative_sum,
-					row_number() OVER(partition by teamID ORDER BY yearID) AS RN
-    			from t2
-    			where cumulative_sum >= 1000000000)
+with t as (	select teamID, yearID, sum(salary) as total_spent
+      		from salaries
+      		group by teamID, yearID),
+            
+ t2 as (	select teamID, yearID,
+			sum(total_spent) over (partition by teamID order by yearID) AS cumulative_sum
+		    from t),
+
+t3   as	(    select teamID, yearID, cumulative_sum,
+		      row_number() OVER(partition by teamID ORDER BY yearID) AS RN
+    		  from t2
+    		  where cumulative_sum >= 1000000000)
 
 select teamID, yearID, ROUND(cumulative_sum /1000000000, 2) as cumulative_sum_millions
 from t3
@@ -79,6 +86,7 @@ where RN = 1;
 
 -- PART III: PLAYER CAREER ANALYSIS
 -- 1. View the players table and find the number of players in the table
+
 select count(*) as count_players from players;
 
 select birthYear, nameGIVEN, debut, finalGame
