@@ -21,8 +21,8 @@ with t as 	(select round(s.yearID, -1) AS decade, sd.name_full, count(distinct s
         			group by decade, s.schoolID),
 
 	    t2 as	(select decade, name_full, player_count,
-					row_number() over(partition by decade order by player_count desc) as row_num
-			from t)
+				row_number() over(partition by decade order by player_count desc) as row_num
+				from t)
 select decade, name_full, player_count
 from t2
 where row_num <= 3
@@ -90,6 +90,7 @@ from players
 
 -- 2. For each player, calculate their age at their first game, their last game, 
 --    and their career length (all in years). Sort from longest career to shortest career.
+
 select nameGIVEN,
 		timestampdiff(year, cast(concat( birthYear,"-", birthMonth, "-" ,birthDay ) as date), debut) as starting_age,
         timestampdiff(year, cast(concat( birthYear,"-", birthMonth, "-" ,birthDay ) as date), finalGame) as end_age,
@@ -98,6 +99,7 @@ from players
 order by carrer_length desc;
 
 -- 3. What team did each player play on for their starting and ending years?
+
 select  p.nameGiven,
 					s.yearID as starting_year, s.teamID as starting_team, 
           s2.yearID as ending_year, s2.teamID as ending_team
@@ -113,6 +115,7 @@ where s.teamID = s2.teamID
 
 
 -- 4. How many players started and ended on the same team and also played for over a decade?
+
 select *
 from players;
 
@@ -129,12 +132,15 @@ from players p
                     	inner join salaries s2
 					on p.playerID = s2.playerID
 					and year(p.finalGame) = s2.yearID;
+					
 -- PART IV: PLAYER COMPARISON ANALYSIS
 -- 1. View the players table
+
 select *
 from players;
 
 -- 2. Which players have the same birthday?
+
 with t as (	select p1.nameGIVEN,
 					cast(concat( p1.birthYear,"-", p1.birthMonth, "-" ,p1.birthDay) as date) as birthday
 			from players p1 inner join players p2
@@ -146,6 +152,7 @@ group by birthday
 order by birthday;
 
 -- 3. Create a summary table that shows for each team, what percent of players bat right, left and both
+
 select s.teamID,
 		round(sum(case when p.bats ="R" THEN 1 ELSE 0 END) / COUNT(s.playerID) * 100, 1) as right_hand,
         round(sum(case when p.bats ="L" THEN 1 ELSE 0 END) / COUNT(s.playerID) * 100, 1) as left_hand,
